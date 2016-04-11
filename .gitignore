@@ -46,3 +46,8 @@ build/
 #test files
 *.pem
 *.cert
+
+.directory
+
+#configured cmake files
+brewpipp.conf

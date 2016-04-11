@@ -22,41 +22,36 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_AUTHORITIES_HPP
+#define BREWPIPP_AUTHORITIES_HPP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
-#include <string>
+#include <bitset>
+#include <sqlpp11/odbc/connection.h>
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
+namespace brewpipp {
+	namespace util {
+		class QEntry;
+	}
+	constexpr size_t AuthoritiesCount = 4;
+	class Authorities : public std::bitset<AuthoritiesCount> {
+	public:
+		Authorities(const int64_t& v) : std::bitset<AuthoritiesCount>(v) {}
+		Authorities(util::QEntry& req, sqlpp::odbc::connection& db);
+		
+		int64_t value() const { return to_ullong(); }
+		
+		bool viewStatus() const { return operator[](0); }
+		reference viewStatus() { return operator[](0); }
+		
+		bool viewHistory() const { return operator[](1); }
+		reference viewHistory() { return operator[](1); }
+		
+		bool viewSettings() const { return operator[](2); }
+		reference viewSettings() { return operator[](2); }
+		
+		bool editSettings() const { return operator[](3); }
+		reference editSettings() { return operator[](3); }
+	};
+}
 
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
-	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
-
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //BREWPIPP_AUTHORITIES_HPP

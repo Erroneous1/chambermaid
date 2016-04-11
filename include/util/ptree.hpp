@@ -22,41 +22,36 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_UTIL_PTREE_HPP
+#define BREWPIPP_UTIL_PTREE_HPP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
-#include <string>
+#include <boost/property_tree/ptree.hpp>
+#include <vector>
+#include <utility>
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
+namespace brewpipp {
+	namespace util {
+		template<typename Iterable>
+		boost::property_tree::ptree ptree_list(const Iterable& iterable) {
+			boost::property_tree::ptree ret;
+			for(const auto& v : iterable) {
+				ret.push_back(v);
+			}
+			return ret;
+		}
+		
+		template<typename Iterable>
+		boost::property_tree::ptree ptree_set(const Iterable& iterable) {
+			boost::property_tree::ptree ret;
+			for(const auto& v : iterable) {
+				ret.add_child(v.first,v.second);
+			}
+			return ret;
+		}
+		
+		template<typename T>
+		using ptree_iter = std::vector<std::pair<T,boost::property_tree::ptree> >;
+	}
+}
 
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
-	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
-
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //BREWPIPP_UTIL_PTREE_HPP

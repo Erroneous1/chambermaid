@@ -19,5 +19,20 @@ Name=GCC
 Path=gcc
 Type=GCC
 
+[Launch]
+Launch Configurations=Launch Configuration 0
+
+[Launch][Launch Configuration 0]
+Configured Launch Modes=debug
+Configured Launchers=gdb
+Name=test_serial
+Type=Native Application
+
+[Launch][Launch Configuration 0][Data]
+Configured from ProjectItem=brewpipp,src,tests,test_serial
+Project Target=brewpipp,src,tests,test_serial
+Working Directory=file:///home/aaron/projects/brewpipp/build/src/tests/
+isExecutable=false
+
 [Project]
 VersionControlSupport=kdevgit

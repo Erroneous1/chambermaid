@@ -22,41 +22,45 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_UTIL_LOG_HPP
+#define BREWPIPP_UTIL_LOG_HPP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
-#include <string>
+#include <ostream>
+#include <sqlpp11/odbc/connection.h>
+#include <boost/thread/shared_mutex.hpp>
+#include <sstream>
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
+namespace brewpipp {
+	namespace util {
+		/// Provides an ostream to use instead of std::cerr that will log to the database
+		class Log : public std::basic_ostream<char> {
+		public:
+			Log(sqlpp::odbc::connection_config& config);
+			
+			template<typename T>
+			Log& operator<<(const T& t) {
+				boost::shared_lock<boost::shared_mutex> lock(log_mutex);
+				oss << t;
+				write_entry(true);
+				return *this;
+			}
+			
+			Log& operator<<(std::ostream& (*fun)(std::ostream&)) {
+				boost::shared_lock<boost::shared_mutex> lock(log_mutex);
+				if(fun == std::endl) {
+					write_entry(false);
+				} else {
+					oss << fun;
+				}
+				return *this;
+			}
+		private:
+			boost::shared_mutex log_mutex;
+			std::ostringstream output;
+			sqlpp::odbc::connection db;
+			void write_entry(const bool& only_if_full);
+		};
+	}
+}
 
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
-	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
-
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //BREWPIPP_UTIL_LOG_HPP

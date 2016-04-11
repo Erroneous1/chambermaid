@@ -22,41 +22,46 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#include "string.hpp"
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
-#include <string>
+namespace brewpipp {
+#ifdef __windows__
+#include <iostream>
+#include <clocale>
+#include <locale>
+#include <vector>
+#include <limits>
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
+std::setlocale(LC_ALL,"");
+const std::locale locale("");
+typedef std::codecvt<wchar_t, char, std::mbstate_t> converter_type;
 
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
+std::string to_string(const string& s){
+	const converter_type& converter = std::use_facet<converter_type>(locale);
+	std::vector<char> ret(s.length() * converter.max_length());
+	std::mbstate_t state;
+	const wchar_t *from_next;
+	char *to_next;
+	const converter_type::result result = converter.out(state,
+														ws.data(),
+														ws.data() + ws.length(), 
+														from_next, 
+													 &ret[0], 
+													 &ret[0] + ret.size(), 
+														to_next);
+	if(result == converter_type::ok || result == converter_type::no_conv){
+		return std::string(ret.begin(), ret.end());
+	}else{
+		std::string retS;
+		retS.reserve(s.length());
+		for(auto c : s){
+			if(c >= std::numeric_limits<char>::min && c <= std::numeric_limits<char>::max){
+				retS.push_back((char)c);
+			}
+		}
+		return retS;
+	}
+}
 #endif
-namespace brewpipp{
-	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
 
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+} //namespace brewpipp

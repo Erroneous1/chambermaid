@@ -22,41 +22,47 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_TABLES_GROUPS_HPP
+#define BREWPIPP_TABLES_GROUPS_HPP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
-#include <string>
+#include <sqlpp11/table.h>
+#include "table_helper.hpp"
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
-
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
+namespace brewpipp {
 	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
+	namespace tables {
+		
+		namespace groups_ {
+			struct GroupId {
+				SQLPP_COLUMN_NAMED(group_id)
+					
+				using _traits = sqlpp::make_traits<sqlpp::integral,sqlpp::tag::must_not_update,sqlpp::tag::must_not_insert>;
+			};
+			
+			struct GroupName {
+				SQLPP_COLUMN_NAMED(group_name)
+					
+				using _traits = sqlpp::make_traits<sqlpp::text,sqlpp::tag::require_insert>;
+			};
+		}
+		
+		struct Groups : sqlpp::table_t<Groups,
+			groups_::GroupId,
+			groups_::GroupName
+		> {
+			static constexpr const char create[] =
+				"CREATE TABLE IF NOT EXISTS groups ("
+				"group_id "		"TINYINT "		"NOT NULL AUTO INCREMENT,"
+				"group_name "	"VARCHAR(32)"	"NOT NULL,"
+				"PRIMARY KEY (group_id),"
+				"CONSTRAINT unique_name UNIQUE (group_name)"
+				") AUTO_INCREMENT=1";
+			
+			SQLPP_COLUMN_NAMED(groups)
+			
+			typedef uint8_t group_id_t;
+		};
+	}
+}
 
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //BREWPIPP_TABLES_GROUPS_HPP

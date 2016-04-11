@@ -20,36 +20,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+find_package(FCGI REQUIRED)
+find_package(qdecoder REQUIRED)
+find_package(jsoncpp REQUIRED)
 
-project(brewpipp)
+set(CMAKE_EXECUTABLE_SUFFIX cgi)
 
+add_executable( panel panel.cpp )
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
+set(CGI_LINK
+	${FCGI_LIBRARIES}
+	${qdecoder_LIBRARIES}
+	${jsoncpp_LIBRARIES}
+	${src_LIBRARIES}
+	src
+)
 
-set(PROJECT_VERSION_MAJOR 0)
-set(PROJECT_VERSION_MINOR 0)
-set(PROJECT_VERSION_TWEAK 1)
+target_link_libraries(panel ${CGI_LINK})
 
-set(SAVE_VERSION 0)
+include_directories(
+	${FCGI_INCLUDE_DIR}
+	${qdecoder_INCLUDE_DIR}
+	${jsoncpp_INCLUDE_DIR}
+)
 
-set(BREWPIPP_CONF_NAME "brewpipp.conf")
-
-IF(WIN32)
-	message("WIN32")
-	set(__windows__ 1)
-endif()
-
-configure_file(
-	brewpipp_config.hpp.in
-	"${PROJECT_SOURCE_DIR}/include/brewpipp_config.hpp"
-	)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -FPIC -std=c++11 -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-message("")
-
-enable_testing()
-
-include_directories(include)
-
-add_subdirectory(src)
+install(TARGETS panel RUNTIME DESTINATION cgi-bin)

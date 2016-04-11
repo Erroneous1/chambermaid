@@ -20,36 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+message("src_LIBRARIES: ${src_LIBRARIES}")
 
-project(brewpipp)
+add_library(DeathHandler OBJECT DeathHandler/death_handler.cc)
 
+add_executable(test_ip ip.cpp $<TARGET_OBJECTS:DeathHandler>)
+target_link_libraries(test_ip ${src_LIBRARIES} src util dl)
+add_test(ip test_ip)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
+add_executable(test_tty tty.cpp $<TARGET_OBJECTS:DeathHandler>)
+target_link_libraries(test_tty ${src_LIBRARIES} src util dl)
+add_test(tty test_tty)
 
-set(PROJECT_VERSION_MAJOR 0)
-set(PROJECT_VERSION_MINOR 0)
-set(PROJECT_VERSION_TWEAK 1)
-
-set(SAVE_VERSION 0)
-
-set(BREWPIPP_CONF_NAME "brewpipp.conf")
-
-IF(WIN32)
-	message("WIN32")
-	set(__windows__ 1)
-endif()
-
-configure_file(
-	brewpipp_config.hpp.in
-	"${PROJECT_SOURCE_DIR}/include/brewpipp_config.hpp"
-	)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -FPIC -std=c++11 -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-message("")
-
-enable_testing()
-
-include_directories(include)
-
-add_subdirectory(src)
+add_executable(test_serial serial.cpp $<TARGET_OBJECTS:DeathHandler>)
+target_link_libraries(test_serial ${src_LIBRARIES} src util dl)
+add_test(serial test_serial "/dev/ACM0")

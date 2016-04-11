@@ -20,36 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+add_library(util_ip OBJECT ip.cpp)
+add_library(util_tty OBJECT tty.cpp)
+add_library(util_serial OBJECT serial.cpp)
+add_library(util_version OBJECT version.cpp)
+add_library(util_buffered_io OBJECT BufferedIO.cpp)
+add_library(util_async_impl OBJECT AsyncImpl.cpp)
+add_library(util_buffered_serial OBJECT BufferedSerial.cpp)
 
-project(brewpipp)
-
-
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
-
-set(PROJECT_VERSION_MAJOR 0)
-set(PROJECT_VERSION_MINOR 0)
-set(PROJECT_VERSION_TWEAK 1)
-
-set(SAVE_VERSION 0)
-
-set(BREWPIPP_CONF_NAME "brewpipp.conf")
-
-IF(WIN32)
-	message("WIN32")
-	set(__windows__ 1)
-endif()
-
-configure_file(
-	brewpipp_config.hpp.in
-	"${PROJECT_SOURCE_DIR}/include/brewpipp_config.hpp"
-	)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -FPIC -std=c++11 -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-message("")
-
-enable_testing()
-
-include_directories(include)
-
-add_subdirectory(src)
+add_library(util
+	$<TARGET_OBJECTS:util_ip>
+	$<TARGET_OBJECTS:util_tty>
+	$<TARGET_OBJECTS:util_serial>
+	$<TARGET_OBJECTS:util_version>
+	$<TARGET_OBJECTS:util_buffered_io>
+	$<TARGET_OBJECTS:util_async_impl>
+	$<TARGET_OBJECTS:util_buffered_serial>
+)

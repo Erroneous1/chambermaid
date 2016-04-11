@@ -20,36 +20,56 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+add_subdirectory(util)
 
-project(brewpipp)
+find_package(Boost REQUIRED COMPONENTS system filesystem thread)
+find_package(sqlpp11 REQUIRED)
+find_package(OpenSSL)
+find_package(jsoncpp)
 
-
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
-
-set(PROJECT_VERSION_MAJOR 0)
-set(PROJECT_VERSION_MINOR 0)
-set(PROJECT_VERSION_TWEAK 1)
-
-set(SAVE_VERSION 0)
-
-set(BREWPIPP_CONF_NAME "brewpipp.conf")
-
-IF(WIN32)
-	message("WIN32")
-	set(__windows__ 1)
+if(NOT sqlpp11_odbc_FOUND)
+	message(FATAL_ERROR "sqlpp11-connector-odbc required")
 endif()
 
-configure_file(
-	brewpipp_config.hpp.in
-	"${PROJECT_SOURCE_DIR}/include/brewpipp_config.hpp"
+include_directories(
+	${Boost_INCLUDE_DIRS}
+	${sqlpp11_odbc_INCLUDE_DIRS}
+	${sqlpp11_INCLUDE_DIRS}
+)
+
+set(src_LIBRARIES
+	${Boost_LIBRARIES}
+	${sqlpp11_odbc_LIBRARIES}
+)
+
+if(OPENSSL_FOUND)
+	include_directories(${OPENSSL_INCLUDE_DIR})
+	set(SecureConnection_LIBS ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES})
+	
+	add_library(SecureConnection SecureConnection.cpp)
+endif()
+
+if(jsoncpp_FOUND)
+	include_directories(${jsoncpp_INCLUDE_DIRS})
+	set(src_LIBRARIES ${src_LIBRARIES}
+		${jsoncpp_LIBRARIES}
 	)
+	if(NOT BREWPIPP_NO_CGI)
+		add_subdirectory(cgi)
+	endif()
+endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -FPIC -std=c++11 -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-message("")
+add_library(Options OBJECT Options.cpp)
+add_library(string OBJECT string.cpp)
+add_library(authorities OBJECT authorities.cpp)
 
-enable_testing()
+add_library(src util
+	$<TARGET_OBJECTS:string>
+	$<TARGET_OBJECTS:Options>
+	$<TARGET_OBJECTS:authorities>
+)
 
-include_directories(include)
 
-add_subdirectory(src)
+
+
+add_subdirectory(tests)

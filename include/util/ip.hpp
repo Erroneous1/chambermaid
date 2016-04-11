@@ -22,41 +22,49 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_UTIL_IP
+#define BREWPIPP_UTIL_IP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
 #include <string>
+#include <array>
+#include <cstdint>
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
+namespace brewpipp {
+	namespace util {
+		class ip{
+		public:
+			typedef std::array<uint8_t,16> ip_data_t;
+			ip(const char* s) throw(std::exception);
+			explicit ip(const std::string& d) throw(std::exception);
+			ip(const ip_data_t& d) : data(d) {}
+			ip(const ip& copy) = default;
+			ip(ip&& move) = default;
+			
+			ip& operator=(const ip& copy) = default;
+			ip& operator=(ip&& move) = default;
+			
+			std::string to_string() const;
+			std::string value() const;
+			
+			ip operator&(const ip& rhs) const;
+			bool operator==(const ip& rhs) const;
+		private:
+			ip_data_t data;
+			
+		};
+		
+		class netmask {
+		public:
+			netmask (const ip& ip, const uint8_t& cidr);
+			
+			bool operator==(const ip& rhs) const;
+			
+			static netmask ipv4_map() { return netmask(ip(ip::ip_data_t({0,0,0,0,0,0,0,0,0,0,0xFF,0xFF,0,0,0,0})),96); }
+		private:
+			const ip& m_ip;
+			const ip& m_nm;
+		};
+	}
+}
 
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
-	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
-
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //BREWPIPP_UTIL_IP

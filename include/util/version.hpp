@@ -22,41 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_UTIL_VERSION_HPP
+#define BREWPIPP_UTIL_VERSION_HPP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
+#include <vector>
 #include <string>
+#include <cstdint>
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
+namespace brewpipp {
+	namespace util {
+		class VersionCode {
+		public:
+			VersionCode(const std::string& s);
+			std::string to_string() const;
+			
+			bool operator<(const VersionCode& rhs) const;
+		private:
+			std::vector<uint16_t> codes;
+		};
+	}
+}
 
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
-	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
-
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //BREWPIPP_UTIL_VERSION_HPP

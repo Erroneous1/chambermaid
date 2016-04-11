@@ -22,41 +22,29 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_TABLES_TABLE_HELPER_HPP
+#define BREWPIPP_TABLES_TABLE_HELPER_HPP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
-#include <string>
-
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
-
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
-	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
+#define SQLPP_COLUMN_NAMED(x) struct _alias_t {\
+	static constexpr const char _literal[] = #x;\
+	using _name_t = sqlpp::make_char_sequence<sizeof(_literal),_literal>;\
+	template<typename T>\
+	struct _member_t {\
+		T x;\
+		T& operator()(){ return x; }\
+		const T& operator()() const { return x; }\
+	};\
 };
-	
-} //namespace brewpipp
 
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#define SQLPP_TABLE_NAMED(x) struct _alias_t {\
+	static constexpr const char _literal[] = #x;\
+	using _name_t = sqlpp::make_char_sequence<sizeof(_literal),_literal>;\
+	template<typename T>\
+	struct _member_t {\
+		T x;\
+		T& operator()(){ return x; }\
+		const T& operator()() const { return x; }\
+	};\
+};
+
+#endif //BREWPIPP_TABLES_TABLE_HELPER_HPP

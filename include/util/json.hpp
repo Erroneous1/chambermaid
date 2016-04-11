@@ -22,41 +22,41 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
+#ifndef BREWPIPP_UTIL_JSON_HPP
+#define BREWPIPP_UTIL_JSON_HPP
 
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
+#include <json/json.h>
+#include <vector>
 #include <string>
+#include <iterator>
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
-
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
-namespace brewpipp{
+namespace Json {
+	template<class InputIterable>
+	Value FromValueList( const InputIterable begin, const InputIterable end ) {
+		Value v;
+		for( auto itr = begin; itr != end; itr++ ) {
+			v.append(*itr);
+		}
+		return v;
+	}
 	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
+	template<class T>
+	Value FromValueList( const T& t ) { return FromValueList( t.begin(), t.end() ); }
 	
-	virtual ~SqlError();
-};
+	template<class InputIterable>
+	Value FromValueSet( const InputIterable begin, const InputIterable end ) {
+		Value v;
+		for( auto itr = begin; itr != end; itr++ ) {
+			v[itr->first] = itr->second;
+		}
+		return v;
+	}
 	
-} //namespace brewpipp
+	template<class T>
+	Value FromValueSet( const T& t ) { return FromValueSet( t.begin(), t.end() ); }
+	
+	typedef std::vector<std::pair<std::string,Value> > ValueSet;
+	typedef std::vector<Value> ValueList;
+}
 
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //BREWPIPP_UTIL_JSON_HPP

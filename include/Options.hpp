@@ -22,41 +22,28 @@
  * SOFTWARE.
  */
 
-#ifndef BREWPIPP_SQL_ERROR_HPP
-#define BREWPIPP_SQL_ERROR_HPP
-
-#include "brewpipp_config.hpp"
-#include <stdexcept>
-#include <cassert>
+#ifndef BREWPIPP_CONFIGURATION_HPP
+#define BREWPIPP_CONFIGURATION_HPP
+#include <map>
 #include <string>
+#include <memory>
+#include <stdexcept>
+#include <boost/filesystem.hpp>
+#include <boost/system/system_error.hpp>
+#include <sqlpp11/odbc/connection.h>
+#include "string.hpp"
 
-# define sql_assert(expr, line, file)										\
-((expr)															\
-? __ASSERT_VOID_CAST (0)										\
-: throw SqlError(__STRING(expr), line, file))
-
-#ifdef BREWPIPP_ODBC
-#include <sql.h>
-#include <sqlext.h>
-
-
-#define sql_succeed(expr, handle, type, line, file)						\
-(SQL_SUCCEEDED(expr)										\
-? __ASSERT_VOID_CAST (0)									\
-: throw SqlError(__STRING(expr), handle, type, line, file))
-#else
-
-#endif
 namespace brewpipp{
+	struct Options{
+		boost::filesystem::path conf_file;
+		bool secure_only;
+		bool require_login;
+		sqlpp::odbc::connection_config sql_config;
+		Options(const int& argc, const char_t **argv) throw (boost::system::system_error);
+		Options() throw (boost::system::system_error);
+		static bool is_secure();
+	};
 	
-class SqlError : public std::runtime_error{
-public:
-	SqlError(const std::string &operation, SQLHANDLE handle, SQLSMALLINT type, const int &line, const std::string &file);
-	SqlError(const std::string &what, const int &line, const std::string &file);
-	
-	virtual ~SqlError();
-};
-	
-} //namespace brewpipp
+}//namespace brewpipp
 
-#endif //ndef BREWPIPP_SQL_ERROR_HPP
+#endif //ndef BREWPIPP_CONFIGURATION_HPP
